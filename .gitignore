@@ -1,0 +1,4 @@
+.agent/
+.DS_Store
+.pnpm-store/
+.pnpm-store/**
