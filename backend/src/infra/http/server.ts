@@ -2,9 +2,9 @@ import 'dotenv/config'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import mercurius, { type IResolvers } from 'mercurius'
-import { env } from './env'
-import { buildContext } from './graphql/context'
-import { resolvers, schema } from './graphql/schema'
+import { env } from '../../env'
+import { buildContext } from '../graphql/context'
+import { resolvers, schema } from '../graphql/schema'
 
 const app = Fastify({ logger: true })
 

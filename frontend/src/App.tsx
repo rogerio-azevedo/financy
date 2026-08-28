@@ -3,10 +3,11 @@ import { useAuth } from './lib/auth'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { DashboardPage } from './pages/DashboardPage'
-import { TransactionsPage } from './pages/TransactionsPage'
-import { CategoriesPage } from './pages/CategoriesPage'
+import { TransactionsPage } from './pages/transactions/TransactionsPage'
+import { CategoriesPage } from './pages/categories/CategoriesPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { ProtectedRoute } from './routes/ProtectedRoute'
+import { Toaster } from './components/ui/toaster'
 
 function Home() {
   const { token, user, loading } = useAuth()
@@ -18,6 +19,7 @@ function Home() {
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />

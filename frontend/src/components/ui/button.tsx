@@ -10,6 +10,7 @@ const buttonVariants = cva(
       variant: {
         solid: 'bg-brand text-white hover:bg-brand-dark',
         outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-100',
+        danger: 'bg-danger text-white hover:bg-red-dark',
       },
       size: {
         md: 'h-12 px-4 py-3 text-base leading-6',

@@ -1,10 +1,11 @@
+import { useEffect } from 'react'
 import { CircleArrowDown, CircleArrowUp } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Button } from '../ui/button'
-import { Dialog } from '../ui/dialog'
-import { Input, Select } from '../ui/input'
+import { Button } from '../../components/ui/button'
+import { Dialog } from '../../components/ui/dialog'
+import { Input, Select } from '../../components/ui/input'
 import { CATEGORIES_QUERY } from '../../graphql/category'
 import {
   CREATE_TRANSACTION_MUTATION,
@@ -13,6 +14,7 @@ import {
   UPDATE_TRANSACTION_MUTATION,
 } from '../../graphql/transaction'
 import { reaisToCents, centsToReaisInput, toDateInput } from '../../lib/money'
+import { toastSuccess } from '../../lib/toast'
 import { cn } from '../../lib/utils'
 import { transactionFormSchema, type TransactionForm } from '../../schemas/transaction'
 
@@ -24,6 +26,25 @@ type Transaction = {
   type: 'INCOME' | 'EXPENSE'
   date: string
   category?: { id: string } | null
+}
+
+const EMPTY_TRANSACTION: TransactionForm = {
+  title: '',
+  amount: '',
+  type: 'EXPENSE',
+  date: '',
+  categoryId: '',
+}
+
+function toTransactionForm(transaction?: Transaction | null): TransactionForm {
+  if (!transaction) return EMPTY_TRANSACTION
+  return {
+    title: transaction.title,
+    amount: centsToReaisInput(transaction.amountCents),
+    type: transaction.type,
+    date: toDateInput(transaction.date),
+    categoryId: transaction.category?.id ?? '',
+  }
 }
 
 export function TransactionDialog({
@@ -45,22 +66,12 @@ export function TransactionDialog({
 
   const form = useForm<TransactionForm>({
     resolver: zodResolver(transactionFormSchema),
-    values: transaction
-      ? {
-        title: transaction.title,
-        amount: centsToReaisInput(transaction.amountCents),
-        type: transaction.type,
-        date: toDateInput(transaction.date),
-        categoryId: transaction.category?.id ?? '',
-      }
-      : {
-        title: '',
-        amount: '',
-        type: 'EXPENSE',
-        date: '',
-        categoryId: '',
-      },
+    defaultValues: EMPTY_TRANSACTION,
   })
+
+  useEffect(() => {
+    if (open) form.reset(toTransactionForm(transaction))
+  }, [open, transaction, form])
 
   const type = form.watch('type')
   const date = form.watch('date')
@@ -81,9 +92,12 @@ export function TransactionDialog({
     try {
       if (transaction) {
         await update({ variables: { id: transaction.id, input } })
+        toastSuccess('Transação atualizada com sucesso')
       } else {
         await create({ variables: { input } })
+        toastSuccess('Transação criada com sucesso')
       }
+      form.reset(EMPTY_TRANSACTION)
       onOpenChange(false)
     } catch (err) {
       form.setError('title', {

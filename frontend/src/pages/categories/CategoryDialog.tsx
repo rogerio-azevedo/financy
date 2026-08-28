@@ -1,9 +1,10 @@
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@apollo/client/react'
-import { Button } from '../ui/button'
-import { Dialog } from '../ui/dialog'
-import { Input } from '../ui/input'
+import { Button } from '../../components/ui/button'
+import { Dialog } from '../../components/ui/dialog'
+import { Input } from '../../components/ui/input'
 import {
   CATEGORIES_QUERY,
   CREATE_CATEGORY_MUTATION,
@@ -16,6 +17,7 @@ import {
   iconMap,
 } from '../../lib/category-meta'
 import { cn } from '../../lib/utils'
+import { toastSuccess } from '../../lib/toast'
 import { categoryFormSchema, type CategoryForm } from '../../schemas/category'
 
 const COLOR_SWATCH_ORDER = [
@@ -46,6 +48,23 @@ type Category = {
   color: string
 }
 
+const EMPTY_CATEGORY: CategoryForm = {
+  name: '',
+  description: '',
+  icon: 'briefcase-business',
+  color: 'green',
+}
+
+function toCategoryForm(category?: Category | null): CategoryForm {
+  if (!category) return EMPTY_CATEGORY
+  return {
+    name: category.name,
+    description: category.description,
+    icon: (category.icon as CategoryForm['icon']) ?? EMPTY_CATEGORY.icon,
+    color: (category.color as CategoryForm['color']) ?? EMPTY_CATEGORY.color,
+  }
+}
+
 export function CategoryDialog({
   open,
   onOpenChange,
@@ -64,13 +83,12 @@ export function CategoryDialog({
 
   const form = useForm<CategoryForm>({
     resolver: zodResolver(categoryFormSchema),
-    values: {
-      name: category?.name ?? '',
-      description: category?.description ?? '',
-      icon: (category?.icon as CategoryForm['icon']) ?? 'briefcase-business',
-      color: (category?.color as CategoryForm['color']) ?? 'green',
-    },
+    defaultValues: EMPTY_CATEGORY,
   })
+
+  useEffect(() => {
+    if (open) form.reset(toCategoryForm(category))
+  }, [open, category, form])
 
   const icon = form.watch('icon')
   const color = form.watch('color')
@@ -79,9 +97,12 @@ export function CategoryDialog({
     try {
       if (category) {
         await update({ variables: { id: category.id, input: values } })
+        toastSuccess('Categoria atualizada com sucesso')
       } else {
         await create({ variables: { input: values } })
+        toastSuccess('Categoria criada com sucesso')
       }
+      form.reset(EMPTY_CATEGORY)
       onOpenChange(false)
     } catch (err) {
       form.setError('name', {

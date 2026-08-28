@@ -1,27 +1,29 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@apollo/client/react'
 import { ChevronLeft, ChevronRight, CircleArrowDown, Plus, Search, SquarePen, Trash } from 'lucide-react'
-import { AppLayout } from '../components/layout/AppLayout'
-import { Button } from '../components/ui/button'
-import { IconButton } from '../components/ui/icon-button'
-import { Input, Select } from '../components/ui/input'
-import { PaginationButton } from '../components/ui/pagination-button'
-import { Tag, TypeBadge } from '../components/ui/tag'
-import { TransactionDialog } from '../components/transactions/TransactionDialog'
-import { CATEGORIES_QUERY } from '../graphql/category'
+import { AppLayout } from '../../components/layout/AppLayout'
+import { Button } from '../../components/ui/button'
+import { IconButton } from '../../components/ui/icon-button'
+import { Input, Select } from '../../components/ui/input'
+import { PaginationButton } from '../../components/ui/pagination-button'
+import { Tag, TypeBadge } from '../../components/ui/tag'
+import { ConfirmDialog } from '../../components/ui/confirm-dialog'
+import { TransactionDialog } from './TransactionDialog'
+import { CATEGORIES_QUERY } from '../../graphql/category'
 import {
   DELETE_TRANSACTION_MUTATION,
   SUMMARY_QUERY,
   TRANSACTIONS_QUERY,
-} from '../graphql/transaction'
+} from '../../graphql/transaction'
 import {
   colorClasses,
   iconMap,
   isCategoryColor,
   isCategoryIcon,
-} from '../lib/category-meta'
-import { formatDate, formatSignedBRL } from '../lib/money'
-import { cn } from '../lib/utils'
+} from '../../lib/category-meta'
+import { formatDate, formatSignedBRL } from '../../lib/money'
+import { toastSuccess } from '../../lib/toast'
+import { cn } from '../../lib/utils'
 
 type Category = { id: string; name: string }
 type Transaction = {
@@ -84,6 +86,7 @@ export function TransactionsPage() {
   const [period, setPeriod] = useState('')
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Transaction | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<Transaction | null>(null)
 
   const filter = useMemo(
     () => ({
@@ -99,7 +102,7 @@ export function TransactionsPage() {
   const { data, loading } = useQuery<{
     transactions: { items: Transaction[]; total: number; page: number; perPage: number }
   }>(TRANSACTIONS_QUERY, { variables: { filter, page, perPage: 10 } })
-  const [remove] = useMutation(DELETE_TRANSACTION_MUTATION, {
+  const [remove, removeState] = useMutation(DELETE_TRANSACTION_MUTATION, {
     refetchQueries: [TRANSACTIONS_QUERY, SUMMARY_QUERY, CATEGORIES_QUERY],
   })
 
@@ -210,11 +213,7 @@ export function TransactionsPage() {
                       <IconButton
                         tone="danger"
                         aria-label="Excluir"
-                        onClick={() => {
-                          if (window.confirm('Excluir esta transação?')) {
-                            void remove({ variables: { id: item.id } })
-                          }
-                        }}
+                        onClick={() => setPendingDelete(item)}
                       >
                         <Trash size={16} />
                       </IconButton>
@@ -248,6 +247,20 @@ export function TransactionsPage() {
         </footer>
       </section>
       <TransactionDialog open={open} onOpenChange={setOpen} transaction={editing} />
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(next) => { if (!next) setPendingDelete(null) }}
+        title="Excluir transação?"
+        description="Esta ação não pode ser desfeita."
+        loading={removeState.loading}
+        onConfirm={() => {
+          if (!pendingDelete) return
+          void remove({ variables: { id: pendingDelete.id } }).then(() => {
+            setPendingDelete(null)
+            toastSuccess('Transação excluída com sucesso')
+          })
+        }}
+      />
     </AppLayout>
   )
 }

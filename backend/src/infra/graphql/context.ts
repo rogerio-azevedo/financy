@@ -1,6 +1,6 @@
 import type { FastifyRequest } from 'fastify'
-import { prisma } from '../lib/prisma'
-import { verifyToken } from '../lib/auth'
+import { prisma } from '../db/prisma'
+import { verifyToken } from '../../utils/jwt'
 
 export type AuthUser = {
   id: string

@@ -1,5 +1,5 @@
-import { prisma } from '../lib/prisma'
-import { requireUser, type Context } from '../graphql/context'
+import { prisma } from '../infra/db/prisma'
+import { requireUser, type Context } from '../infra/graphql/context'
 import type { CategoryCreateInput, CategoryUpdateInput } from '../schemas/category'
 
 export async function listCategories(ctx: Context) {

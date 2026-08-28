@@ -2,22 +2,24 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@apollo/client/react'
 import type { LucideIcon } from 'lucide-react'
 import { ArrowUpDown, Plus, SquarePen, Tag as TagIcon, Trash } from 'lucide-react'
-import { AppLayout } from '../components/layout/AppLayout'
-import { Button } from '../components/ui/button'
-import { IconButton } from '../components/ui/icon-button'
-import { Tag } from '../components/ui/tag'
-import { CategoryDialog } from '../components/categories/CategoryDialog'
+import { AppLayout } from '../../components/layout/AppLayout'
+import { Button } from '../../components/ui/button'
+import { IconButton } from '../../components/ui/icon-button'
+import { Tag } from '../../components/ui/tag'
+import { ConfirmDialog } from '../../components/ui/confirm-dialog'
+import { CategoryDialog } from './CategoryDialog'
 import {
   CATEGORIES_QUERY,
   DELETE_CATEGORY_MUTATION,
-} from '../graphql/category'
+} from '../../graphql/category'
 import {
   colorClasses,
   iconMap,
   isCategoryColor,
   isCategoryIcon,
-} from '../lib/category-meta'
-import { cn } from '../lib/utils'
+} from '../../lib/category-meta'
+import { toastSuccess } from '../../lib/toast'
+import { cn } from '../../lib/utils'
 
 type Category = {
   id: string
@@ -34,8 +36,9 @@ const sectionTitle = 'text-xs leading-4 font-medium tracking-[0.6px] text-gray-5
 export function CategoriesPage() {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<Category | null>(null)
   const { data } = useQuery<{ categories: Category[] }>(CATEGORIES_QUERY)
-  const [remove] = useMutation(DELETE_CATEGORY_MUTATION, { refetchQueries: [CATEGORIES_QUERY] })
+  const [remove, removeState] = useMutation(DELETE_CATEGORY_MUTATION, { refetchQueries: [CATEGORIES_QUERY] })
   const categories = data?.categories ?? []
 
   const stats = useMemo(() => {
@@ -97,11 +100,7 @@ export function CategoriesPage() {
                   <IconButton
                     tone="danger"
                     aria-label="Excluir"
-                    onClick={() => {
-                      if (window.confirm('Excluir esta categoria?')) {
-                        void remove({ variables: { id: category.id } })
-                      }
-                    }}
+                    onClick={() => setPendingDelete(category)}
                   >
                     <Trash size={16} />
                   </IconButton>
@@ -125,6 +124,20 @@ export function CategoriesPage() {
         })}
       </div>
       <CategoryDialog open={open} onOpenChange={setOpen} category={editing} />
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(next) => { if (!next) setPendingDelete(null) }}
+        title="Excluir categoria?"
+        description="Esta ação não pode ser desfeita."
+        loading={removeState.loading}
+        onConfirm={() => {
+          if (!pendingDelete) return
+          void remove({ variables: { id: pendingDelete.id } }).then(() => {
+            setPendingDelete(null)
+            toastSuccess('Categoria excluída com sucesso')
+          })
+        }}
+      />
     </AppLayout>
   )
 }

@@ -1,6 +1,7 @@
-import { prisma } from '../lib/prisma'
-import { comparePassword, hashPassword, signToken } from '../lib/auth'
-import { requireUser, type Context } from '../graphql/context'
+import { prisma } from '../infra/db/prisma'
+import { comparePassword, hashPassword } from '../utils/hash'
+import { signToken } from '../utils/jwt'
+import { requireUser, type Context } from '../infra/graphql/context'
 import type { ProfileUpdateInput, RegisterInput } from '../schemas/user'
 import type { LoginInput } from '../schemas/auth'
 

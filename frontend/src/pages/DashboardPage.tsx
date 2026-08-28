@@ -4,7 +4,7 @@ import { ChevronRight, CircleArrowDown, CircleArrowUp, Plus, Wallet } from 'luci
 import { AppLayout } from '../components/layout/AppLayout'
 import { Tag } from '../components/ui/tag'
 import { TextLink } from '../components/ui/text-link'
-import { TransactionDialog } from '../components/transactions/TransactionDialog'
+import { TransactionDialog } from './transactions/TransactionDialog'
 import { CATEGORIES_QUERY } from '../graphql/category'
 import { SUMMARY_QUERY, TRANSACTIONS_QUERY } from '../graphql/transaction'
 import {
